@@ -1,26 +1,536 @@
 @import "tailwindcss";
-
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@custom-variant dark (&:where(.dark, .dark *));
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-black: #000000;
+  --color-black-100: #000000;
+  --color-black-200: #000000;
+  --color-black-300: #000000;
+  --color-black-400: #000000;
+  --color-black-500: #000000;
+  --color-black-600: #333333;
+  --color-black-700: #666666;
+  --color-black-800: #999999;
+  --color-black-900: #cccccc;
+
+  --color-teal: #839788;
+  --color-teal-100: #1a1f1b;
+  --color-teal-200: #333d36;
+  --color-teal-300: #4d5c50;
+  --color-teal-400: #667a6b;
+  --color-teal-500: #839788;
+  --color-teal-600: #9bab9f;
+  --color-teal-700: #b4c0b7;
+  --color-teal-800: #cdd5cf;
+  --color-teal-900: #e6eae7;
+
+  --color-champagne: #eee0cb;
+  --color-champagne-100: #423015;
+  --color-champagne-200: #84612b;
+  --color-champagne-300: #c39045;
+  --color-champagne-400: #d8b887;
+  --color-champagne-500: #eee0cb;
+  --color-champagne-600: #f1e5d4;
+  --color-champagne-700: #f5ecdf;
+  --color-champagne-800: #f8f2e9;
+  --color-champagne-900: #fcf9f4;
+
+  --color-khaki: #baa898;
+  --color-khaki-100: #28211b;
+  --color-khaki-200: #514236;
+  --color-khaki-300: #796451;
+  --color-khaki-400: #9f856f;
+  --color-khaki-500: #baa898;
+  --color-khaki-600: #c8b9ac;
+  --color-khaki-700: #d5cac1;
+  --color-khaki-800: #e3dcd5;
+  --color-khaki-900: #f1edea;
+
+  --color-sky: #bfd7ea;
+  --color-sky-100: #152c40;
+  --color-sky-200: #295980;
+  --color-sky-300: #3e85c0;
+  --color-sky-400: #7eaed5;
+  --color-sky-500: #bfd7ea;
+  --color-sky-600: #cbdeee;
+  --color-sky-700: #d8e6f2;
+  --color-sky-800: #e5eff7;
+  --color-sky-900: #f2f7fb;
+
+  --font-sans: var(--font-noto-sans, "Noto Sans", sans-serif);
+  --font-hindi: var(--font-noto-hindi, "Noto Sans Devanagari", sans-serif);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background: #fcf9f4;
+    color: #000000;
+    overflow-x: hidden;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  /* Dark theme overrides */
+  .dark body {
+    background: #0f1410;
+    color: #e6eae7;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* ===========================================================
+   Book Opening Loader — Cinematic 3D tilted scene
+   =========================================================== */
+.book-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(ellipse at 50% 30%, #2a1810 0%, #0e0805 70%),
+    #0e0805;
+  perspective: 2200px;
+  perspective-origin: 50% 35%;
+  overflow: hidden;
+}
+
+/* Dramatic top-down spotlight */
+.book-spotlight {
+  position: absolute;
+  top: -20%;
+  left: 50%;
+  width: 800px;
+  height: 90%;
+  transform: translateX(-50%);
+  background: radial-gradient(
+    ellipse at top,
+    rgba(238, 224, 203, 0.28) 0%,
+    rgba(195, 144, 69, 0.1) 30%,
+    transparent 65%
+  );
+  filter: blur(28px);
+  pointer-events: none;
+}
+
+/* Soft golden floor glow */
+.book-floor {
+  position: absolute;
+  bottom: 18%;
+  left: 50%;
+  width: 620px;
+  height: 90px;
+  transform: translateX(-50%) rotateX(80deg);
+  background: radial-gradient(
+    ellipse,
+    rgba(195, 144, 69, 0.45) 0%,
+    transparent 70%
+  );
+  filter: blur(22px);
+  pointer-events: none;
+}
+
+/* Tilted 3D scene — rotated to give the book a "displayed on a podium" feel */
+.book-scene {
+  position: relative;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+.book-3d {
+  width: 320px;
+  height: 460px;
+  position: relative;
+  transform-style: preserve-3d;
+}
+
+/* Each "leaf" is a double-sided flippable container with two faces glued
+   back-to-back. The leaf rotates; its faces stay in place relative to it. */
+.book-leaf {
+  position: absolute;
+  inset: 0;
+  transform-origin: left center;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+/* Generic face (shared by cover and pages) — sits on its leaf */
+.book-face {
+  position: absolute;
+  inset: 0;
+  border-radius: 3px 10px 10px 3px;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  will-change: transform;
+}
+
+/* Front cover (closed face) */
+.book-cover-front {
+  background:
+    radial-gradient(ellipse at 30% 25%, rgba(255, 255, 255, 0.06) 0%, transparent 50%),
+    linear-gradient(135deg, #2a1810 0%, #4a2c1a 45%, #2a1810 80%);
+  border: 2px solid #c39045;
+  box-shadow:
+    inset 0 0 70px rgba(0, 0, 0, 0.65),
+    inset 4px 0 0 rgba(195, 144, 69, 0.5),
+    0 30px 60px -10px rgba(0, 0, 0, 0.85);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2.25rem 1.75rem;
+}
+
+.book-cover-front::before {
+  content: "";
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  right: 14px;
+  bottom: 14px;
+  border: 1.5px solid #d8b887;
+  border-radius: 2px 8px 8px 2px;
+  pointer-events: none;
+}
+
+/* Inside of the front cover — revealed once the cover has flipped open. */
+.book-cover-inside {
+  background:
+    radial-gradient(ellipse at center, rgba(238, 224, 203, 0.4) 0%, transparent 65%),
+    linear-gradient(135deg, #f8f0dd 0%, #ede0c8 100%);
+  transform: rotateY(180deg);
+  border: 2px solid rgba(195, 144, 69, 0.35);
+  box-shadow: inset 0 0 50px rgba(195, 144, 69, 0.22);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.book-cover-inside::before {
+  content: "";
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  right: 14px;
+  bottom: 14px;
+  border: 1.5px dashed rgba(195, 144, 69, 0.5);
+  border-radius: 2px 8px 8px 2px;
+  pointer-events: none;
+}
+
+.book-cover-front h1 {
+  font-size: 1.55rem;
+  font-weight: 800;
+  color: #f0d4a8;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  line-height: 1.3;
+  text-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.7),
+    0 0 20px rgba(195, 144, 69, 0.35);
+}
+
+.book-cover-front .school-emblem {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #f0d4a8, #c39045 60%, #a37030);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    0 4px 20px rgba(195, 144, 69, 0.55),
+    inset 0 -4px 8px rgba(0, 0, 0, 0.25);
+  margin-bottom: 1rem;
+}
+
+.book-cover-front .tagline {
+  font-size: 0.7rem;
+  color: #d8b887;
+  margin-top: 0.6rem;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+}
+
+/* Inner pages — cream paper with subtle gradient */
+.book-page {
+  background: linear-gradient(135deg, #fdf8ef 0%, #f2e8d4 100%);
+  box-shadow:
+    inset -3px 0 8px rgba(195, 144, 69, 0.12),
+    inset 0 -2px 4px rgba(195, 144, 69, 0.18);
+}
+
+/* Back side of an inner page — same paper but mirrored. Subtle inverse
+   shadow so the page looks like a real two-sided sheet after it flips. */
+.book-page-back {
+  background: linear-gradient(225deg, #fdf8ef 0%, #f2e8d4 100%);
+  transform: rotateY(180deg);
+  box-shadow:
+    inset 3px 0 8px rgba(195, 144, 69, 0.12),
+    inset 0 -2px 4px rgba(195, 144, 69, 0.18);
+}
+
+/* Final inside spread (always visible at the back of the stack) */
+.book-final-page {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at center, rgba(238, 224, 203, 0.5) 0%, transparent 70%),
+    linear-gradient(135deg, #fdf8ef 0%, #f2e8d4 100%);
+  border-radius: 3px 10px 10px 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 0;
+  box-shadow: inset 0 0 60px rgba(195, 144, 69, 0.18);
+}
+
+/* 3D spine on the left */
+.book-spine-3d {
+  position: absolute;
+  left: -22px;
+  top: 0;
+  width: 22px;
+  height: 100%;
+  background: linear-gradient(to right, #1a0e08 0%, #3a1f10 50%, #1a0e08 100%);
+  transform: rotateY(-90deg);
+  transform-origin: right center;
+  border-top: 1px solid #c39045;
+  border-bottom: 1px solid #c39045;
+  box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.6);
+}
+
+/* Gilt edge along the top of the pages */
+.book-edge-top {
+  position: absolute;
+  top: -4px;
+  left: 6px;
+  right: 0;
+  height: 8px;
+  background: repeating-linear-gradient(
+    to right,
+    #d8b887 0px,
+    #f0d4a8 1px,
+    #c39045 2px
+  );
+  border-radius: 2px;
+  transform: rotateX(-88deg);
+  transform-origin: bottom;
+  box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.4);
+}
+
+/* Bookmark ribbon hanging from the top */
+.book-bookmark {
+  position: absolute;
+  top: -10px;
+  right: 56px;
+  width: 16px;
+  height: 130px;
+  background: linear-gradient(to bottom, #d8b887, #c39045 75%, #a37030);
+  box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.5);
+  z-index: 30;
+  transform: translateZ(2px);
+}
+
+.book-bookmark::after {
+  content: "";
+  position: absolute;
+  bottom: -8px;
+  left: 0;
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 10px solid #a37030;
+}
+
+/* Magical sparkle particles emerging from the book */
+.book-sparkle {
+  position: absolute;
+  pointer-events: none;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff 0%, #f0d4a8 40%, transparent 70%);
+  box-shadow: 0 0 10px #f0d4a8, 0 0 20px rgba(240, 212, 168, 0.4);
+  left: 50%;
+  top: 50%;
+  will-change: transform, opacity;
+}
+
+/* ---------- Responsive: tablet & mobile ---------- */
+@media (max-width: 640px) {
+  .book-loader {
+    perspective: 1400px;
+  }
+
+  .book-3d {
+    width: 180px;
+    height: 260px;
+  }
+
+  .book-cover-front {
+    padding: 1rem 0.75rem;
+  }
+
+  .book-cover-front::before,
+  .book-cover-inside::before {
+    top: 8px;
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+  }
+
+  .book-cover-front h1 {
+    font-size: 1rem;
+    letter-spacing: 1.5px;
+  }
+
+  .book-cover-front .school-emblem {
+    width: 54px;
+    height: 54px;
+    margin-bottom: 0.6rem;
+  }
+
+  .book-cover-front .tagline {
+    font-size: 0.55rem;
+    letter-spacing: 2.5px;
+    margin-top: 0.4rem;
+  }
+
+  .book-cover-inside {
+    padding: 0.85rem;
+  }
+
+  .book-spotlight {
+    width: 100vw;
+    filter: blur(20px);
+  }
+
+  .book-floor {
+    width: 90vw;
+    height: 50px;
+    bottom: 24%;
+  }
+
+  .book-spine-3d {
+    left: -14px;
+    width: 14px;
+  }
+
+  .book-bookmark {
+    right: 28px;
+    top: -6px;
+    width: 10px;
+    height: 80px;
+  }
+
+  .book-bookmark::after {
+    bottom: -7px;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 7px solid #a37030;
+  }
+
+  .book-edge-top {
+    height: 5px;
+    top: -3px;
+    left: 4px;
+  }
+}
+
+/* ---------- Small phones ---------- */
+@media (max-width: 380px) {
+  .book-3d {
+    width: 158px;
+    height: 230px;
+  }
+
+  .book-cover-front {
+    padding: 0.85rem 0.6rem;
+  }
+
+  .book-cover-front h1 {
+    font-size: 0.9rem;
+    letter-spacing: 1px;
+  }
+
+  .book-cover-front .school-emblem {
+    width: 46px;
+    height: 46px;
+  }
+
+  .book-cover-front .tagline {
+    font-size: 0.5rem;
+  }
+
+  .book-bookmark {
+    right: 22px;
+    height: 72px;
+  }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1edea;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #839788;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #667a6b;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: #1a1f1b;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #4d5c50;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #667a6b;
+}
+
+/* AOS custom animations */
+[data-aos="flip-up"] {
+  transform: perspective(2500px) rotateX(50deg);
+  opacity: 0;
+  transition-property: transform, opacity;
+}
+
+[data-aos="flip-up"].aos-animate {
+  transform: perspective(2500px) rotateX(0);
+  opacity: 1;
+}
+
+/* Focus visible — accessibility */
+:focus-visible {
+  outline: 2px solid #c39045;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
 }
